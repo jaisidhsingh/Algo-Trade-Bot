@@ -2,19 +2,52 @@ from dotenv import load_dotenv
 import os
 from alpaca_trade_api.rest import REST,TimeFrame
 import pandas as pd
-import time
+from alpaca_trade_api.stream2 import StreamConn
+import threading
+#load_dotenv()
 
-load_dotenv()
-api = REST()
+API_KEY = "api key here"
+API_SECRET = "api secret here"
+BASE_URL = "https://paper-api.alpaca.markets"
 
-def openingRise(name: str, bufferTime: str, x: float):
-	last = api.get_barset(name, 'day', limit=1)
-	last
-	lastClose = last[name][0]
+api = REST(API_KEY, API_SECRET, BASE_URL, api_version='v2')
 
-	time.sleep(bufferTime)
+account = REST(API_KEY, API_SECRET, BASE_URL,
+                    api_version="v2").get_account()
 
-	curr = api.get_last_trade(name)
-	currentPrice = curr["price"]
-	if (currentPrice - lastClose)*100 / lastClose >= x/100:
-		# print("yes") '''BUY'''
+def runTest():
+    blocked = False
+    if account.trading_blocked:
+        blocked = True
+
+    if blocked == False:
+        print("running")
+                
+        connection = StreamConn(API_KEY, API_SECRET, base_url=BASE_URL,
+                    data_url="wss://data.alpaca.markets",
+                    data_stream="alpacadatav1")
+        
+        @connection.on(r'^AM.AAPL$')
+        async def tradeInfo(connection, channels, data):
+            symbol = data.symbol
+            print("close: ", data.close)
+            print("open: ", data.open)
+            print("low: ", data.low)
+            print("high: ", data.high)
+
+            if data.close > data.open and data.open - data.low > 0.01:
+                print("buying 1")
+                api.submit_order(symbol, 1, "buy", 
+                    "market", "day")
+                print("bought")
+                print("remaining: ", account.buy_power)
+            #2do : sell and take profit later
+        
+        def startTest():
+            connection.run(["AM.AAPL"])
+            print("...requesting")
+
+        websocketThread = threading.Thread(target=startTest, daemon=True)
+        websocketThread.start()
+
+runTest()
