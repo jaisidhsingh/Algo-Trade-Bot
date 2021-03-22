@@ -4,16 +4,21 @@ from alpaca_trade_api.rest import REST,TimeFrame
 import pandas as pd
 from alpaca_trade_api.stream2 import StreamConn
 import threading
+import json
+import time
+from datetime import datetime
 #load_dotenv()
 
-API_KEY = "api key here"
-API_SECRET = "api secret here"
+API_KEY = "PK29VN03PTIK0OHT47H2"
+API_SECRET = "xCBbrAuSvAtpSGPEbtnwihRrwQtoBUp1WC1W8g1q"
 BASE_URL = "https://paper-api.alpaca.markets"
 
 api = REST(API_KEY, API_SECRET, BASE_URL, api_version='v2')
+account = api.get_account()
 
-account = REST(API_KEY, API_SECRET, BASE_URL,
-                    api_version="v2").get_account()
+def writeJSON(data, file):
+    with open(file, "w") as f:
+        json.dump(data, f, indent=4)
 
 def runTest():
     blocked = False
@@ -26,28 +31,34 @@ def runTest():
         connection = StreamConn(API_KEY, API_SECRET, base_url=BASE_URL,
                     data_url="wss://data.alpaca.markets",
                     data_stream="alpacadatav1")
+        print("connecting...")
         
         @connection.on(r'^AM.AAPL$')
         async def tradeInfo(connection, channels, data):
+
             symbol = data.symbol
             print("close: ", data.close)
             print("open: ", data.open)
             print("low: ", data.low)
-            print("high: ", data.high)
-
-            if data.close > data.open and data.open - data.low > 0.01:
-                print("buying 1")
-                api.submit_order(symbol, 1, "buy", 
-                    "market", "day")
-                print("bought")
-                print("remaining: ", account.buy_power)
-            #2do : sell and take profit later
-        
-        def startTest():
-            connection.run(["AM.AAPL"])
-            print("...requesting")
-
-        websocketThread = threading.Thread(target=startTest, daemon=True)
-        websocketThread.start()
+            print("high: ", data.high, "\n")
+            now = datetime.now()
+            now = now.strftime("%H:%M:%S")
+            trades = {"ref": now, 
+                        "symbol": symbol, 
+                        "close": data.close, 
+                        "open": data.open, 
+                        "low": data.low, 
+                        "high": data.high, 
+                        "funds": account.buying_power}
+                
+            with open("store.json") as reserve:
+                store = json.load(reserve)
+            
+                temp = store["tradeInfo"]
+                temp.append(trades)
+            writeJSON(store, file="store.json")
+            # sell and take profit later
+        connection.run(["AM.AAPL"])
+        print("...requesting")
 
 runTest()
