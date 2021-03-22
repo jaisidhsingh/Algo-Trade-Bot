@@ -9,8 +9,8 @@ import time
 from datetime import datetime
 #load_dotenv()
 
-API_KEY = "PK29VN03PTIK0OHT47H2"
-API_SECRET = "xCBbrAuSvAtpSGPEbtnwihRrwQtoBUp1WC1W8g1q"
+API_KEY = "your api key here"
+API_SECRET = "your api secret here"
 BASE_URL = "https://paper-api.alpaca.markets"
 
 api = REST(API_KEY, API_SECRET, BASE_URL, api_version='v2')
@@ -59,6 +59,6 @@ def runTest():
             writeJSON(store, file="store.json")
             # sell and take profit later
         connection.run(["AM.AAPL"])
-        print("...requesting")
+        
 
 runTest()
