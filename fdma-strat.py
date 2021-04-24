@@ -9,8 +9,8 @@ import os
 from alpaca_trade_api.stream2 import StreamConn
 import threading
 
-API_KEY = ""
-API_SECRET = ""
+API_KEY = "your api key here"
+API_SECRET = "your api secret here"
 BASE_URL = "https://paper-api.alpaca.markets"
 
 api = tradeapi.REST(API_KEY, API_SECRET, BASE_URL, api_version='v2')
