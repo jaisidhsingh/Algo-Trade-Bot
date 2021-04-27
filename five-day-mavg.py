@@ -10,8 +10,8 @@ import os
 from alpaca_trade_api.stream2 import StreamConn
 import threading
 
-API_KEY = "PK29VN03PTIK0OHT47H2"
-API_SECRET = "xCBbrAuSvAtpSGPEbtnwihRrwQtoBUp1WC1W8g1q"
+API_KEY = "your api key here"
+API_SECRET = "your api secret here"
 BASE_URL = "https://paper-api.alpaca.markets"
 
 api = tradeapi.REST(API_KEY, API_SECRET, BASE_URL, api_version='v2')
@@ -90,36 +90,33 @@ fdma_test(stock1, stock2)
 portfolio = api.list_positiosn()
 clock = api.get_clock()
 
-def make_trades():
-    if clock.is_open == True:
-        if bool(portfolio) == False:
-            if current_spread > wide_spread:
-                #short top stock
-                api.submit_order(symbol=stock1, qty=number_of_shares, side='sell',
-                    type="market", time_in_force="day")
+if clock.is_open == True:
+    if bool(portfolio) == False:
+        if current_spread > wide_spread:
+            #short top stock
+            api.submit_order(symbol=stock1, qty=number_of_shares, side='sell',
+                type="market", time_in_force="day")
 
-                #long bottom stock
-                api.submit_order(symbol=stock2, qty=number_of_shares, side="buy", 
-                    type ="market", time_in_force="day")
-                print("short top-long bottom : sold-bought")
+            #long bottom stock
+            api.submit_order(symbol=stock2, qty=number_of_shares, side="buy", 
+                type ="market", time_in_force="day")
+            print("short top-long bottom : sold-bought")
 
-            elif current_spread < thin_spread:
-                #long top stock
-                api.submit_oder(symbol=stock1, qty=number_of_shares, side="buy", 
-                    type ="market", time_in_force="day")
-                #short bottom stock
-                api.submit_oder(symbol=stock2, qty-number_of_shares, side="sell", 
-                    type="market", time_in_force="day")
-                print("long top-short botton : bought-sold")
+        elif current_spread < thin_spread:
+            #long top stock
+            api.submit_oder(symbol=stock1, qty=number_of_shares, side="buy", 
+                type ="market", time_in_force="day")
+            #short bottom stock
+            api.submit_oder(symbol=stock2, qty-number_of_shares, side="sell", 
+                type="market", time_in_force="day")
+            print("long top-short botton : bought-sold")
+    else:
+        wide_trade_spread = spread_avg*(1+spread_factor+.03)
+        thin_trade_spread = spread_avg*(1+spread_factor-.03)
+        if current_spread<=wide_trade_spread and current_spread>=thin_trade_spread:
+            api.close_position(stock1)
+            api.close_position(stock2)
+            print("position closed")
         else:
-            wide_trade_spread = spread_avg*(1+spread_factor+.03)
-            thin_trade_spread = spread_avg*(1+spread_factor-.03)
-            if current_spread<=wide_trade_spread and current_spread>=thin_trade_spread:
-                api.close_position(stock1)
-                api.close_position(stock2)
-                print("position closed")
-            else:
-                print("no trades made, position open")
-                pass
-
-make_trades()
+            print("no trades made, position open")
+            pass
